@@ -1,0 +1,487 @@
+openapi: 3.0.0
+
+info:
+  description: |
+    You can find out more about Swagger at
+    [http://swagger.io](http://swagger.io) or on
+    [irc.freenode.net, #swagger](http://swagger.io/irc/).
+  version: "2.0.0"
+  title: "flow API: records"
+  license:
+    name: Apache 2.0
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+
+security:
+  - cookieAuth: []
+
+tags: []
+
+paths:
+  /:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/CreateRecords"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Record"
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/Record"
+        400:
+          description: Invalid request
+        409:
+          description: Conflict
+        415:
+          description: Unsupported media type
+        422:
+          description: Unprocessable entity
+        500:
+          description: Internal server error
+
+    put:
+      parameters:
+        - $ref: "#/components/parameters/todo_id"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateRecords"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Record"
+                  - type: array
+                    items:
+                      $ref: "#/components/schemas/Record"
+        400:
+          description: Invalid request
+        404:
+          description: Not found
+        409:
+          description: Conflict
+        415:
+          description: Unsupported media type
+        422:
+          description: Unprocessable entity
+        500:
+          description: Internal server error
+
+    get:
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/scheme_id"
+        - $ref: "#/components/parameters/start"
+        - $ref: "#/components/parameters/end"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Record"
+        204:
+          description: No content
+        500:
+          description: Internal server error
+
+  /{id}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Record"
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+    patch:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateRecord"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Record"
+        400:
+          description: Invalid request
+        404:
+          description: Not found
+        409:
+          description: Conflict
+        415:
+          description: Unsupported media type
+        422:
+          description: Unprocessable entity
+        500:
+          description: Internal server error
+
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        204:
+          description: Deleted
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+  /schemes:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/CreateScheme"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scheme"
+        400:
+          description: Invalid request
+        409:
+          description: Conflict
+        415:
+          description: Unsupported media type
+        422:
+          description: Unprocessable entity
+        500:
+          description: Internal server error
+
+    get:
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/embed"
+        - $ref: "#/components/parameters/start"
+        - $ref: "#/components/parameters/end"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: "#/components/schemas/Scheme"
+                    - $ref: "#/components/schemas/SchemeRecordEmbed"
+        204:
+          description: No content
+        500:
+          description: Internal server error
+
+  /schemes/{id}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/embed"
+        - $ref: "#/components/parameters/start"
+        - $ref: "#/components/parameters/end"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Scheme"
+                  - $ref: "#/components/schemas/SchemeRecordEmbed"
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+    patch:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateScheme"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scheme"
+        400:
+          description: Invalid request
+        404:
+          description: Not found
+        409:
+          description: Conflict
+        415:
+          description: Unsupported media type
+        422:
+          description: Unprocessable entity
+        500:
+          description: Internal server error
+
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        204:
+          description: Deleted
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: TOKEN
+  schemas:
+    Scheme:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        default_graph_type:
+          type: string
+          enum:
+            - sum
+            - flat
+        project_id:
+          type: integer
+
+    SchemeRecordEmbed:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        default_graph_type:
+          type: string
+          enum:
+            - sum
+            - flat
+        project_id:
+          type: integer
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/Record"
+
+    CreateSchemeBody:
+      type: object
+      properties:
+        name:
+          type: string
+        default_graph_type:
+          type: string
+          enum:
+            - sum
+            - flat
+        project_id:
+          type: integer
+      required:
+        - name
+        - project_id
+
+    UpdateSchemeBody:
+      type: object
+      properties:
+        name:
+          type: string
+        default_graph_type:
+          type: string
+          enum:
+            - sum
+            - flat
+        project_id:
+          type: integer
+
+    Record:
+      type: object
+      properties:
+        id:
+          type: integer
+        value:
+          type: number
+        datetime:
+          type: string
+          format: date-time
+        todo_id:
+          type: integer
+        scheme_id:
+          type: integer
+      required:
+        - id
+        - value
+        - datetime
+        - scheme_id
+
+    CreateRecordBody:
+      type: object
+      properties:
+        value:
+          type: number
+        datetime:
+          type: string
+          format: date-time
+        todo_id:
+          type: integer
+        scheme_id:
+          type: integer
+      required:
+        - value
+        - datetime
+        - scheme_id
+
+    CreateMultipleRecordBody:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            type: object
+            properties:
+              value:
+                type: number
+              datetime:
+                type: string
+                format: date-time
+              scheme_id:
+                type: integer
+            required:
+              - value
+              - datetime
+              - scheme_id
+        todo_id:
+          type: integer
+      required:
+        - records
+
+    UpdateRecordBody:
+      type: object
+      properties:
+        value:
+          type: number
+        datetime:
+          type: string
+          format: date-time
+        todo_id:
+          type: integer
+        scheme_id:
+          type: integer
+
+    UpdateMultipleRecordBody:
+      type: array
+      items:
+        type: object
+        properties:
+          scheme_id:
+            type: integer
+          value:
+            type: number
+          datetime:
+            type: string
+            format: date-time
+        required:
+          - scheme_id
+          - value
+          - datetime
+
+  requestBodies:
+    CreateScheme:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateSchemeBody"
+
+    UpdateScheme:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateSchemeBody"
+
+    CreateRecords:
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: "#/components/schemas/CreateRecordBody"
+              - $ref: "#/components/schemas/CreateMultipleRecordBody"
+
+    UpdateRecords:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateMultipleRecordBody"
+
+    UpdateRecord:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateRecordBody"
+
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    project_id:
+      name: project_id
+      in: query
+      schema:
+        type: integer
+    scheme_id:
+      name: scheme_id
+      in: query
+      schema:
+        type: array
+        items:
+          type: integer
+    todo_id:
+      name: todo_id
+      in: query
+      required: true
+      schema:
+        type: integer
+    embed:
+      name: embed
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - records
+    start:
+      name: start
+      in: query
+      schema:
+        type: string
+        format: date-time
+    end:
+      name: end
+      in: query
+      schema:
+        type: string
+        format: date-time
