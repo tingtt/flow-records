@@ -45,7 +45,7 @@ paths:
 
     put:
       parameters:
-        - $ref: "#/components/parameters/todo_id"
+        - $ref: "#/components/parameters/todo_id_required"
       requestBody:
         $ref: "#/components/requestBodies/UpdateRecords"
       responses:
@@ -74,8 +74,10 @@ paths:
 
     get:
       parameters:
+        - $ref: "#/components/parameters/record_embed"
         - $ref: "#/components/parameters/project_id"
         - $ref: "#/components/parameters/scheme_id"
+        - $ref: "#/components/parameters/todo_id"
         - $ref: "#/components/parameters/start"
         - $ref: "#/components/parameters/end"
       responses:
@@ -253,7 +255,7 @@ paths:
     get:
       parameters:
         - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/embed"
+        - $ref: "#/components/parameters/scheme_embed"
         - $ref: "#/components/parameters/start"
         - $ref: "#/components/parameters/end"
       responses:
@@ -276,7 +278,7 @@ paths:
     get:
       parameters:
         - $ref: "#/components/parameters/path_id"
-        - $ref: "#/components/parameters/embed"
+        - $ref: "#/components/parameters/scheme_embed"
         - $ref: "#/components/parameters/start"
         - $ref: "#/components/parameters/end"
       responses:
@@ -286,8 +288,8 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/Scheme"
                   - $ref: "#/components/schemas/SchemeRecordEmbed"
+                  - $ref: "#/components/schemas/Scheme"
         404:
           description: Not found
         500:
@@ -362,7 +364,9 @@ components:
         records:
           type: array
           items:
-            $ref: "#/components/schemas/RecordChangelogEmbed"
+            oneOf:
+              - $ref: "#/components/schemas/RecordChangelogEmbed"
+              - $ref: "#/components/schemas/Record"
 
     CreateSchemeBody:
       type: object
@@ -386,6 +390,26 @@ components:
           type: boolean
         project_id:
           type: integer
+
+    Record:
+      type: object
+      properties:
+        id:
+          type: integer
+        value:
+          type: number
+        datetime:
+          type: string
+          format: date-time
+        todo_id:
+          type: integer
+        scheme_id:
+          type: integer
+      required:
+        - id
+        - value
+        - datetime
+        - scheme_id
 
     RecordChangelogEmbed:
       type: object
@@ -603,13 +627,18 @@ components:
         type: array
         items:
           type: integer
-    todo_id:
+    todo_id_required:
       name: todo_id
       in: query
       required: true
       schema:
         type: integer
-    embed:
+    todo_id:
+      name: todo_id
+      in: query
+      schema:
+        type: integer
+    scheme_embed:
       name: embed
       in: query
       schema:
@@ -618,6 +647,16 @@ components:
           type: string
           enum:
             - records
+            - record.changelog
+    record_embed:
+      name: embed
+      in: query
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - changelog
     start:
       name: start
       in: query
