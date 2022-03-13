@@ -28,10 +28,10 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/Record"
+                  - $ref: "#/components/schemas/RecordChangelogEmbed"
                   - type: array
                     items:
-                      $ref: "#/components/schemas/Record"
+                      $ref: "#/components/schemas/RecordChangelogEmbed"
         400:
           description: Invalid request
         409:
@@ -55,10 +55,10 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: "#/components/schemas/Record"
+                  - $ref: "#/components/schemas/RecordChangelogEmbed"
                   - type: array
                     items:
-                      $ref: "#/components/schemas/Record"
+                      $ref: "#/components/schemas/RecordChangelogEmbed"
         400:
           description: Invalid request
         404:
@@ -86,7 +86,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Record"
+                  $ref: "#/components/schemas/RecordChangelogEmbed"
         204:
           description: No content
         500:
@@ -95,14 +95,14 @@ paths:
   /{id}:
     get:
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/path_id"
       responses:
         200:
           description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Record"
+                $ref: "#/components/schemas/RecordChangelogEmbed"
         404:
           description: Not found
         500:
@@ -110,7 +110,7 @@ paths:
 
     patch:
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/path_id"
       requestBody:
         $ref: "#/components/requestBodies/UpdateRecord"
       responses:
@@ -119,7 +119,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Record"
+                $ref: "#/components/schemas/RecordChangelogEmbed"
         400:
           description: Invalid request
         404:
@@ -135,7 +135,91 @@ paths:
 
     delete:
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/path_id"
+      responses:
+        204:
+          description: Deleted
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+  /changelogs:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/CreateChangelog"
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Changelog"
+
+    get:
+      parameters:
+        - $ref: "#/components/parameters/project_id"
+        - $ref: "#/components/parameters/scheme_id"
+        - $ref: "#/components/parameters/start"
+        - $ref: "#/components/parameters/end"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Changelog"
+        204:
+          description: No content
+        500:
+          description: Internal server error
+
+  /changelogs/{id}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/path_id"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Changelog"
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+
+    patch:
+      parameters:
+        - $ref: "#/components/parameters/path_id"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateChangelog"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Changelog"
+        400:
+          description: Invalid request
+        404:
+          description: Not found
+        409:
+          description: Conflict
+        415:
+          description: Unsupported media type
+        422:
+          description: Unprocessable entity
+        500:
+          description: Internal server error
+
+    delete:
+      parameters:
+        - $ref: "#/components/parameters/path_id"
       responses:
         204:
           description: Deleted
@@ -191,7 +275,7 @@ paths:
   /schemes/{id}:
     get:
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/path_id"
         - $ref: "#/components/parameters/embed"
         - $ref: "#/components/parameters/start"
         - $ref: "#/components/parameters/end"
@@ -211,7 +295,7 @@ paths:
 
     patch:
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/path_id"
       requestBody:
         $ref: "#/components/requestBodies/UpdateScheme"
       responses:
@@ -236,7 +320,7 @@ paths:
 
     delete:
       parameters:
-        - $ref: "#/components/parameters/id"
+        - $ref: "#/components/parameters/path_id"
       responses:
         204:
           description: Deleted
@@ -259,11 +343,8 @@ components:
           type: integer
         name:
           type: string
-        default_graph_type:
-          type: string
-          enum:
-            - sum
-            - flat
+        sum_graph:
+          type: boolean
         project_id:
           type: integer
 
@@ -274,28 +355,22 @@ components:
           type: integer
         name:
           type: string
-        default_graph_type:
-          type: string
-          enum:
-            - sum
-            - flat
+        sum_graph:
+          type: boolean
         project_id:
           type: integer
         records:
           type: array
           items:
-            $ref: "#/components/schemas/Record"
+            $ref: "#/components/schemas/RecordChangelogEmbed"
 
     CreateSchemeBody:
       type: object
       properties:
         name:
           type: string
-        default_graph_type:
-          type: string
-          enum:
-            - sum
-            - flat
+        sum_graph:
+          type: boolean
         project_id:
           type: integer
       required:
@@ -307,21 +382,20 @@ components:
       properties:
         name:
           type: string
-        default_graph_type:
-          type: string
-          enum:
-            - sum
-            - flat
+        sum_graph:
+          type: boolean
         project_id:
           type: integer
 
-    Record:
+    RecordChangelogEmbed:
       type: object
       properties:
         id:
           type: integer
         value:
           type: number
+        changelog:
+          $ref: "#/components/schemas/ChangelogOnlyTextAndId"
         datetime:
           type: string
           format: date-time
@@ -340,6 +414,8 @@ components:
       properties:
         value:
           type: number
+        changelog:
+          type: string
         datetime:
           type: string
           format: date-time
@@ -362,6 +438,8 @@ components:
             properties:
               value:
                 type: number
+              changelog:
+                type: string
               datetime:
                 type: string
                 format: date-time
@@ -398,6 +476,8 @@ components:
             type: integer
           value:
             type: number
+          changelog:
+            type: string
           datetime:
             type: string
             format: date-time
@@ -405,6 +485,59 @@ components:
           - scheme_id
           - value
           - datetime
+
+    Changelog:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+        datetime:
+          type: string
+          format: date-time
+        todo_id:
+          type: integer
+        scheme_id:
+          type: integer
+
+    ChangelogOnlyTextAndId:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+
+    CreateChangelogBody:
+      type: object
+      properties:
+        text:
+          type: string
+        datetime:
+          type: string
+          format: date-time
+        todo_id:
+          type: integer
+        scheme_id:
+          type: integer
+      required:
+        - text
+        - datetime
+        - scheme_id
+
+    UpdateChangelogBody:
+      type: object
+      properties:
+        text:
+          type: string
+        datetime:
+          type: string
+          format: date-time
+        todo_id:
+          type: integer
+        scheme_id:
+          type: integer
 
   requestBodies:
     CreateScheme:
@@ -439,8 +572,20 @@ components:
           schema:
             $ref: "#/components/schemas/UpdateRecordBody"
 
+    CreateChangelog:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateChangelogBody"
+
+    UpdateChangelog:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateChangelogBody"
+
   parameters:
-    id:
+    path_id:
       name: id
       in: path
       required: true
