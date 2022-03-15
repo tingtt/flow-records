@@ -79,12 +79,12 @@ func main() {
 	e.GET("/", getList)
 	e.PATCH("/:id", patch)
 	e.DELETE("/:id", delete)
-	gScheme := e.Group("/schemes")
-	gScheme.POST("/", schemePost)
-	gScheme.GET("/", schemeGetList)
-	gScheme.GET("/:id", schemeGet)
-	gScheme.PATCH("/:id", schemePatch)
-	gScheme.DELETE("/:id", schemeDelete)
+	gSchemes := e.Group("/schemes")
+	gSchemes.POST("/", schemePost)
+	gSchemes.GET("/", schemeGetList)
+	gSchemes.GET("/:id", schemeGet)
+	gSchemes.PATCH("/:id", schemePatch)
+	gSchemes.DELETE("/:id", schemeDelete)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", *port)))
 }
