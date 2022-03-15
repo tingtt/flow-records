@@ -486,10 +486,6 @@ components:
         datetime:
           type: string
           format: date-time
-        todo_id:
-          type: integer
-        scheme_id:
-          type: integer
 
     UpdateMultipleRecordBody:
       type: array
@@ -558,8 +554,6 @@ components:
         datetime:
           type: string
           format: date-time
-        todo_id:
-          type: integer
         scheme_id:
           type: integer
 
