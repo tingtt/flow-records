@@ -4,6 +4,7 @@ import (
 	"flow-records/jwt"
 	"flow-records/record"
 	"net/http"
+	"strconv"
 
 	jwtGo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -28,7 +29,41 @@ func putList(c echo.Context) error {
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
 	}
 
-	records, err := record.Put(userId, putQuery{}.TodoId, record.PutBody{})
+	// Bind and validater request query
+	todoId, err := strconv.ParseUint(c.QueryParam("todo_id"), 10, 64)
+	if err != nil {
+		// 422: Unprocessable entity
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
+	}
+	query := &putQuery{todoId}
+	if err = c.Validate(query); err != nil {
+		// 422: Unprocessable entity
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
+	}
+
+	// Bind request body
+	put := new(record.PutBody)
+	if err = c.Bind(put); err != nil {
+		// 400: Bad request
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": err.Error()}, "	")
+	}
+
+	// Validate request body
+	type putBodyWrap struct {
+		Records record.PutBody `validate:"required,gte=1,dive"`
+	}
+	if err = c.Validate(putBodyWrap{*put}); err != nil {
+		// 422: Unprocessable entity
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
+	}
+
+	// TODO: Check todoIdi
+
+	records, err := record.Put(userId, query.TodoId, *put)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Debug(err)
