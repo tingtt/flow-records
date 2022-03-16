@@ -28,7 +28,7 @@ func changeLogGet(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	cl, notFound, err := changelog.Get(userId, id, changelog.GetQuery{})
+	cl, notFound, err := changelog.Get(userId, id)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Debug(err)

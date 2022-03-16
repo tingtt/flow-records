@@ -1,13 +1,38 @@
 package changelog
 
-import "time"
+import (
+	"flow-records/mysql"
+)
 
-type GetQuery struct {
-	Start *time.Time `query:"start" validate:"omitempty"`
-	End   *time.Time `query:"end" validate:"omitempty"`
-	Embed *string    `query:"embed" validate:"omitempty,oneof=records record.changelog"`
-}
+func Get(userId uint64, id uint64) (c ChangeLog, notFound bool, err error) {
+	db, err := mysql.Open()
+	if err != nil {
+		return
+	}
+	defer db.Close()
 
-func Get(userId uint64, id uint64, q GetQuery) (c ChangeLog, notFound bool, err error) {
+	stmtOut, err := db.Prepare("SELECT text, datetime, todo_id, scheme_id FROM changelogs WHERE user_id = ? AND id = ?")
+	if err != nil {
+		return
+	}
+	defer stmtOut.Close()
+
+	rows, err := stmtOut.Query(userId, id)
+	if err != nil {
+		return
+	}
+
+	if !rows.Next() {
+		// Not found
+		notFound = true
+		return
+	}
+
+	c = ChangeLog{Id: id}
+	err = rows.Scan(&c.Text, &c.Datetime, &c.TodoId, &c.SchemeId)
+	if err != nil {
+		return
+	}
+
 	return
 }
