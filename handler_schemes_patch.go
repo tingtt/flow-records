@@ -34,7 +34,24 @@ func schemePatch(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	s, notFound, err := scheme.Patch(userId, id, scheme.PatchBody{})
+	// Bind request body
+	post := new(scheme.PatchBody)
+	if err = c.Bind(post); err != nil {
+		// 400: Bad request
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": err.Error()}, "	")
+	}
+
+	// Validate request body
+	if err = c.Validate(post); err != nil {
+		// 422: Unprocessable entity
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
+	}
+
+	// TODO: Check projectId
+
+	s, notFound, err := scheme.Patch(userId, id, *post)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Debug(err)
