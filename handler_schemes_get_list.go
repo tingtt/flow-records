@@ -18,22 +18,22 @@ func schemeGetList(c echo.Context) error {
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
 	}
 
-	// Bind request body
-	post := new(scheme.GetListQuery)
-	if err = c.Bind(post); err != nil {
+	// Bind request query
+	query := new(scheme.GetListQuery)
+	if err = c.Bind(query); err != nil {
 		// 400: Bad request
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": err.Error()}, "	")
 	}
 
-	// Validate request body
-	if err = c.Validate(post); err != nil {
+	// Validate request query
+	if err = c.Validate(query); err != nil {
 		// 422: Unprocessable entity
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
 	}
 
-	schemes, err := scheme.GetList(userId, *post)
+	schemes, err := scheme.GetList(userId, *query)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Debug(err)
