@@ -28,6 +28,7 @@ func schemeGet(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	// Read db
 	s, notFound, err := scheme.Get(userId, id, scheme.GetQuery{})
 	if err != nil {
 		// 500: Internal server error
