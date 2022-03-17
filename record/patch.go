@@ -22,20 +22,20 @@ func Patch(userId uint64, id uint64, p PatchBody) (r Record, notFound bool, err 
 
 	// Generate query
 	queryStr := "UPDATE records SET"
-	var queryParam []interface{}
+	var queryParams []interface{}
 	if p.Value != nil {
 		queryStr += " value = ?,"
-		queryParam = append(queryParam, p.Value)
+		queryParams = append(queryParams, p.Value)
 		r.Value = *p.Value
 	}
 	if p.Datetime != nil {
 		queryStr += " datetime = ?"
-		queryParam = append(queryParam, p.Datetime.UTC())
+		queryParams = append(queryParams, p.Datetime.UTC())
 		r.Datetime = *p.Datetime
 	}
 	queryStr = strings.TrimRight(queryStr, ",")
 	queryStr += " WHERE user_id = ? AND id = ?"
-	queryParam = append(queryParam, userId, id)
+	queryParams = append(queryParams, userId, id)
 
 	// Update row
 	db, err := mysql.Open()
@@ -48,7 +48,7 @@ func Patch(userId uint64, id uint64, p PatchBody) (r Record, notFound bool, err 
 		return
 	}
 	defer stmtIns.Close()
-	_, err = stmtIns.Exec(queryParam...)
+	_, err = stmtIns.Exec(queryParams...)
 	if err != nil {
 		return
 	}
