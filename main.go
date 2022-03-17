@@ -106,6 +106,7 @@ func main() {
 	e.POST("/", post)
 	e.PUT("/", putList)
 	e.GET("/", getList)
+	e.GET("/:id", get)
 	e.PATCH("/:id", patch)
 	e.DELETE("/:id", delete)
 	e.POST("/changelogs", changeLogPost)
