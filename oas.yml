@@ -74,12 +74,11 @@ paths:
 
     get:
       parameters:
-        - $ref: "#/components/parameters/record_embed"
-        - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/scheme_id"
         - $ref: "#/components/parameters/todo_id"
+        - $ref: "#/components/parameters/scheme_id"
         - $ref: "#/components/parameters/start"
         - $ref: "#/components/parameters/end"
+        - $ref: "#/components/parameters/record_embed"
       responses:
         200:
           description: Success
@@ -160,10 +159,11 @@ paths:
 
     get:
       parameters:
-        - $ref: "#/components/parameters/project_id"
-        - $ref: "#/components/parameters/scheme_id"
         - $ref: "#/components/parameters/start"
         - $ref: "#/components/parameters/end"
+        - $ref: "#/components/parameters/todo_id"
+        - $ref: "#/components/parameters/scheme_id"
+        - $ref: "#/components/parameters/project_id"
       responses:
         200:
           description: Success
@@ -379,7 +379,6 @@ components:
           type: integer
       required:
         - name
-        - project_id
 
     UpdateSchemeBody:
       type: object
@@ -618,9 +617,7 @@ components:
       name: scheme_id
       in: query
       schema:
-        type: array
-        items:
-          type: integer
+        type: integer
     todo_id_required:
       name: todo_id
       in: query
