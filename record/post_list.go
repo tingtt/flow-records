@@ -25,7 +25,7 @@ func PostMultiple(userId uint64, p MultiplePostBody) (records []Record, err erro
 	queryParams := []interface{}{}
 	for _, r := range p.Records {
 		queryStr += " (?, ?, ?, ?, ?),"
-		queryParams = append(queryParams, userId, r.Value, r.Datetime, r.SchemeId, p.TodoId)
+		queryParams = append(queryParams, userId, r.Value, r.Datetime.UTC(), r.SchemeId, p.TodoId)
 	}
 	queryStr = strings.TrimRight(queryStr, ",")
 

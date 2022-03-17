@@ -34,7 +34,7 @@ func Post(userId uint64, p PostBody) (c ChangeLog, err error) {
 
 	c.Id = uint64(id)
 	c.Text = p.Text
-	c.Datetime = p.Datetime.UTC()
+	c.Datetime = p.Datetime
 	c.SchemeId = p.SchemeId
 	if p.TodoId != nil {
 		c.TodoId = p.TodoId

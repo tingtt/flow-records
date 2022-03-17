@@ -41,7 +41,7 @@ func Patch(userId uint64, id uint64, p PatchBody) (c ChangeLog, notFound bool, e
 		return
 	}
 	defer stmtIns.Close()
-	_, err = stmtIns.Exec(p.Text, p.Datetime, p.SchemeId, userId, id)
+	_, err = stmtIns.Exec(p.Text, p.Datetime.UTC(), p.SchemeId, userId, id)
 	if err != nil {
 		return
 	}

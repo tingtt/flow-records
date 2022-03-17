@@ -25,7 +25,7 @@ func Post(userId uint64, p PostBody) (r Record, err error) {
 		return
 	}
 	defer stmtIns.Close()
-	result, err := stmtIns.Exec(userId, p.Value, p.Datetime, p.SchemeId, p.TodoId)
+	result, err := stmtIns.Exec(userId, p.Value, p.Datetime.UTC(), p.SchemeId, p.TodoId)
 	if err != nil {
 		return
 	}
