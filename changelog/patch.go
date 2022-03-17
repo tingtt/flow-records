@@ -2,6 +2,7 @@ package changelog
 
 import (
 	"flow-records/mysql"
+	"strings"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type PatchBody struct {
 }
 
 func Patch(userId uint64, id uint64, p PatchBody) (c ChangeLog, notFound bool, err error) {
-	old, notFound, err := Get(userId, id)
+	c, notFound, err = Get(userId, id)
 	if err != nil {
 		return
 	}
@@ -20,15 +21,27 @@ func Patch(userId uint64, id uint64, p PatchBody) (c ChangeLog, notFound bool, e
 		return
 	}
 
-	if p.Text == nil {
-		p.Text = &old.Text
+	// Generate query
+	queryStr := "UPDATE changelogs SET"
+	var queryParams []interface{}
+	if p.Text != nil {
+		queryStr += " text = ?,"
+		queryParams = append(queryParams, p.Text)
+		c.Text = *p.Text
 	}
-	if p.Datetime == nil {
-		p.Datetime = &old.Datetime
+	if p.Datetime != nil {
+		queryStr += " datetime = ?,"
+		queryParams = append(queryParams, p.Datetime.UTC())
+		c.Datetime = *p.Datetime
 	}
-	if p.SchemeId == nil {
-		p.SchemeId = &old.SchemeId
+	if p.SchemeId != nil {
+		queryStr += " scheme_id = ?"
+		queryParams = append(queryParams, p.SchemeId)
+		c.SchemeId = *p.SchemeId
 	}
+	queryStr = strings.TrimRight(queryStr, ",")
+	queryStr += " WHERE user_id = ? AND id = ?"
+	queryParams = append(queryParams, userId, id)
 
 	// Update row
 	db, err := mysql.Open()
@@ -36,20 +49,15 @@ func Patch(userId uint64, id uint64, p PatchBody) (c ChangeLog, notFound bool, e
 		return
 	}
 	defer db.Close()
-	stmtIns, err := db.Prepare("UPDATE changelogs SET text = ?, datetime = ?, scheme_id = ? WHERE user_id = ? AND id = ?")
+	stmtIns, err := db.Prepare(queryStr)
 	if err != nil {
 		return
 	}
 	defer stmtIns.Close()
-	_, err = stmtIns.Exec(p.Text, p.Datetime.UTC(), p.SchemeId, userId, id)
+	_, err = stmtIns.Exec(queryParams...)
 	if err != nil {
 		return
 	}
 
-	c.Id = id
-	c.Text = *p.Text
-	c.Datetime = *p.Datetime
-	c.TodoId = old.TodoId
-	c.SchemeId = *p.SchemeId
 	return
 }

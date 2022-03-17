@@ -1,6 +1,9 @@
 package scheme
 
-import "flow-records/mysql"
+import (
+	"flow-records/mysql"
+	"strings"
+)
 
 type PatchBody struct {
 	Name      *string `json:"name" validate:"omitempty,gte=1"`
@@ -9,7 +12,7 @@ type PatchBody struct {
 }
 
 func Patch(userId uint64, id uint64, p PatchBody) (s Scheme, notFound bool, err error) {
-	old, notFound, err := Get(userId, id, GetQuery{})
+	s, notFound, err = Get(userId, id, GetQuery{})
 	if err != nil {
 		return
 	}
@@ -17,15 +20,27 @@ func Patch(userId uint64, id uint64, p PatchBody) (s Scheme, notFound bool, err 
 		return
 	}
 
-	if p.Name == nil {
-		p.Name = &old.Name
+	// Generate query
+	queryStr := "UPDATE schemes SET"
+	var queryParams []interface{}
+	if p.Name != nil {
+		queryStr += " name = ?,"
+		queryParams = append(queryParams, p.Name)
+		s.Name = *p.Name
 	}
-	if p.SumGraph == nil {
-		p.SumGraph = &old.SumGraph
+	if p.SumGraph != nil {
+		queryStr += " sum_graph = ?,"
+		queryParams = append(queryParams, p.SumGraph)
+		s.SumGraph = *p.SumGraph
 	}
-	if p.ProjectId == nil {
-		p.ProjectId = old.ProjectId
+	if p.ProjectId != nil {
+		queryStr += " project_id = ?"
+		queryParams = append(queryParams, p.ProjectId)
+		s.ProjectId = p.ProjectId
 	}
+	queryStr = strings.TrimRight(queryStr, ",")
+	queryStr += " WHERE user_id = ? AND id = ?"
+	queryParams = append(queryParams, userId, id)
 
 	// Update row
 	db, err := mysql.Open()
@@ -33,19 +48,15 @@ func Patch(userId uint64, id uint64, p PatchBody) (s Scheme, notFound bool, err 
 		return
 	}
 	defer db.Close()
-	stmtIns, err := db.Prepare("UPDATE schemes SET name = ?, sum_graph = ?, project_id = ? WHERE user_id = ? AND id = ?")
+	stmtIns, err := db.Prepare(queryStr)
 	if err != nil {
 		return
 	}
 	defer stmtIns.Close()
-	_, err = stmtIns.Exec(p.Name, p.SumGraph, p.ProjectId, userId, id)
+	_, err = stmtIns.Exec(queryParams...)
 	if err != nil {
 		return
 	}
 
-	s.Id = id
-	s.Name = *p.Name
-	s.SumGraph = *p.SumGraph
-	s.ProjectId = p.ProjectId
 	return
 }
