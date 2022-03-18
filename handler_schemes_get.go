@@ -5,10 +5,17 @@ import (
 	"flow-records/scheme"
 	"net/http"
 	"strconv"
+	"time"
 
 	jwtGo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
+
+type GetQuery struct {
+	Embed *string `query:"embed" validate:"omitempty,oneof=records record.changelog"`
+	Start *string `query:"start" validate:"omitempty,datetime"`
+	End   *string `query:"end" validate:"omitempty,datetime"`
+}
 
 func schemeGet(c echo.Context) error {
 	// Check token
@@ -28,8 +35,43 @@ func schemeGet(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
+	// Bind request query
+	query := new(GetQuery)
+	if err = c.Bind(query); err != nil {
+		// 400: Bad request
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": err.Error()}, "	")
+	}
+
+	// Validate request query
+	if err = c.Validate(query); err != nil {
+		// 400: Bad request
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": err.Error()}, "	")
+	}
+	var start, end *time.Time
+	if query.Start != nil {
+		startTmp, err := datetimeStrConv(*query.Start)
+		if err != nil {
+			// 400: Bad request
+			c.Logger().Debug(err)
+			return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": err.Error()}, "	")
+		}
+		start = &startTmp
+	}
+	if query.End != nil {
+		endTmp, err := datetimeStrConv(*query.End)
+		if err != nil {
+			// 400: Bad request
+			c.Logger().Debug(err)
+			return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": err.Error()}, "	")
+		}
+		end = &endTmp
+	}
+	queryParsed := scheme.GetQuery{Embed: query.Embed, Start: start, End: end}
+
 	// Read db
-	s, notFound, err := scheme.Get(userId, id, scheme.GetQuery{})
+	s, notFound, err := scheme.Get(userId, id, queryParsed)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Debug(err)

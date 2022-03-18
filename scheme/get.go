@@ -1,20 +1,21 @@
 package scheme
 
 import (
-	"database/sql"
 	"flow-records/mysql"
+	"flow-records/record"
+	"time"
 )
 
 type GetQuery struct {
-	// Start *time.Time `query:"start" validate:"omitempty"`
-	// End   *time.Time `query:"end" validate:"omitempty"`
-	// Embed *string    `query:"embed" validate:"omitempty,oneof=records record.changelog"`
+	Embed *string    `query:"embed" validate:"omitempty,oneof=records record.changelog"`
+	Start *time.Time `query:"start" validate:"omitempty"`
+	End   *time.Time `query:"end" validate:"omitempty"`
 }
 
 func Get(userId uint64, id uint64, q GetQuery) (s Scheme, notFound bool, err error) {
-	// TODO: Embedding records
 	// Generate query
 	queryStr := "SELECT name, sum_graph, project_id FROM schemes WHERE user_id = ? AND id = ?"
+	queryParams := []interface{}{userId, id}
 
 	db, err := mysql.Open()
 	if err != nil {
@@ -28,7 +29,7 @@ func Get(userId uint64, id uint64, q GetQuery) (s Scheme, notFound bool, err err
 	}
 	defer stmtOut.Close()
 
-	rows, err := stmtOut.Query(userId, id)
+	rows, err := stmtOut.Query(queryParams)
 	if err != nil {
 		return
 	}
@@ -38,23 +39,26 @@ func Get(userId uint64, id uint64, q GetQuery) (s Scheme, notFound bool, err err
 		notFound = true
 		return
 	}
-	// TODO: uint64に対応 (projectId)
-	var (
-		name      string
-		sumGraph  bool
-		projectId sql.NullInt64
-	)
-	err = rows.Scan(&name, &sumGraph, &projectId)
+	err = rows.Scan(&s.Name, &s.SumGraph, &s.ProjectId)
 	if err != nil {
 		return
 	}
 
-	s.Id = id
-	s.Name = name
-	s.SumGraph = sumGraph
-	if projectId.Valid {
-		projectIdTmp := uint64(projectId.Int64)
-		s.ProjectId = &projectIdTmp
+	if q.Embed != nil {
+		if *q.Embed == "records" {
+			s.Records, err = record.GetList(userId, record.GetListQuery{SchemeId: &id, Start: q.Start, End: q.End})
+			if err != nil {
+				return
+			}
+		} else if *q.Embed == "record.changelog" {
+			embed := "changelog"
+			s.Records, err = record.GetList(userId, record.GetListQuery{SchemeId: &id, Start: q.Start, End: q.End, Embed: &embed})
+			if err != nil {
+				return
+			}
+		}
 	}
+
+	s.Id = id
 	return
 }
