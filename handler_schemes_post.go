@@ -3,6 +3,7 @@ package main
 import (
 	"flow-records/jwt"
 	"flow-records/scheme"
+	"fmt"
 	"net/http"
 
 	jwtGo "github.com/dgrijalva/jwt-go"
@@ -39,7 +40,20 @@ func schemePost(c echo.Context) error {
 		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
 	}
 
-	// TODO: Check projectId
+	// Check project id
+	if post.ProjectId != nil {
+		valid, err := checkProjectId(u.Raw, *post.ProjectId)
+		if err != nil {
+			// 500: Internal server error
+			c.Logger().Debug(err)
+			return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
+		}
+		if !valid {
+			// 409: Conflit
+			c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", *post.ProjectId))
+			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", *post.ProjectId)}, "	")
+		}
+	}
 
 	// Write to db
 	s, err := scheme.Post(userId, *post)

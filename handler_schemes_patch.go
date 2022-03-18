@@ -3,6 +3,7 @@ package main
 import (
 	"flow-records/jwt"
 	"flow-records/scheme"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -49,7 +50,20 @@ func schemePatch(c echo.Context) error {
 		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
 	}
 
-	// TODO: Check projectId
+	// Check project id
+	if post.ProjectId != nil {
+		valid, err := checkProjectId(u.Raw, *post.ProjectId)
+		if err != nil {
+			// 500: Internal server error
+			c.Logger().Debug(err)
+			return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
+		}
+		if !valid {
+			// 409: Conflit
+			c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", *post.ProjectId))
+			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", *post.ProjectId)}, "	")
+		}
+	}
 
 	s, notFound, err := scheme.Patch(userId, id, *post)
 	if err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"flow-records/jwt"
 	"flow-records/record"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -61,7 +62,18 @@ func putList(c echo.Context) error {
 		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
 	}
 
-	// TODO: Check todoIdi
+	// Check todo id
+	valid, err := checkTodoId(u.Raw, todoId)
+	if err != nil {
+		// 500: Internal server error
+		c.Logger().Debug(err)
+		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
+	}
+	if !valid {
+		// 409: Conflit
+		c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", todoId))
+		return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", todoId)}, "	")
+	}
 
 	records, err := record.Put(userId, query.TodoId, *put)
 	if err != nil {

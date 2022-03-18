@@ -56,7 +56,20 @@ func post(c echo.Context) error {
 	if err == nil {
 		// Multiple records
 
-		// TODO: Check todoId
+		// Check todo id
+		if postMultiple.TodoId != nil {
+			valid, err := checkTodoId(u.Raw, *postMultiple.TodoId)
+			if err != nil {
+				// 500: Internal server error
+				c.Logger().Debug(err)
+				return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
+			}
+			if !valid {
+				// 409: Conflit
+				c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", *postMultiple.TodoId))
+				return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", *postMultiple.TodoId)}, "	")
+			}
+		}
 
 		// Check schemeIds
 		for _, records := range postMultiple.Records {
@@ -105,7 +118,20 @@ func post(c echo.Context) error {
 		return c.JSONPretty(http.StatusUnprocessableEntity, map[string]string{"message": err.Error()}, "	")
 	}
 
-	// TODO: Check todoId
+	// Check todo id
+	if post.TodoId != nil {
+		valid, err := checkTodoId(u.Raw, *post.TodoId)
+		if err != nil {
+			// 500: Internal server error
+			c.Logger().Debug(err)
+			return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
+		}
+		if !valid {
+			// 409: Conflit
+			c.Logger().Debug(fmt.Sprintf("todo id: %d does not exist", *post.TodoId))
+			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("todo id: %d does not exist", *post.TodoId)}, "	")
+		}
+	}
 
 	// Check schemeId
 	_, notFound, err := scheme.Get(userId, post.SchemeId, scheme.GetQuery{})
