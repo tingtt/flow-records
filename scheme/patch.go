@@ -1,14 +1,38 @@
 package scheme
 
 import (
+	"encoding/json"
 	"flow-records/mysql"
 	"strings"
 )
 
 type PatchBody struct {
-	Name      *string `json:"name" validate:"omitempty,gte=1"`
-	SumGraph  *bool   `json:"sum_graph" validate:"omitempty"`
-	ProjectId *uint64 `json:"project_id" validate:"omitempty,gte=1"`
+	Name      *string             `json:"name" validate:"omitempty,gte=1"`
+	SumGraph  *bool               `json:"sum_graph" validate:"omitempty"`
+	ProjectId PatchNullJSONUint64 `json:"project_id" validate:"dive"`
+}
+type PatchNullJSONUint64 struct {
+	UInt64 **uint64 `validate:"omitempty,gte=1"`
+}
+
+func (p *PatchNullJSONUint64) UnmarshalJSON(data []byte) error {
+	// If this method was called, the value was set.
+	var valueP *uint64 = nil
+	if string(data) == "null" {
+		// key exists and value is null
+		p.UInt64 = &valueP
+		return nil
+	}
+
+	var tmp uint64
+	tmpP := &tmp
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		// invalid value type
+		return err
+	}
+	// valid value
+	p.UInt64 = &tmpP
+	return nil
 }
 
 func Patch(userId uint64, id uint64, p PatchBody) (s Scheme, notFound bool, err error) {
@@ -33,10 +57,16 @@ func Patch(userId uint64, id uint64, p PatchBody) (s Scheme, notFound bool, err 
 		queryParams = append(queryParams, p.SumGraph)
 		s.SumGraph = *p.SumGraph
 	}
-	if p.ProjectId != nil {
-		queryStr += " project_id = ?"
-		queryParams = append(queryParams, p.ProjectId)
-		s.ProjectId = p.ProjectId
+	if p.ProjectId.UInt64 != nil {
+		if *p.ProjectId.UInt64 != nil {
+			queryStr += " project_id = ?"
+			queryParams = append(queryParams, **p.ProjectId.UInt64)
+			s.ProjectId = *p.ProjectId.UInt64
+		} else {
+			queryStr += " project_id = ?"
+			queryParams = append(queryParams, nil)
+			s.ProjectId = nil
+		}
 	}
 	queryStr = strings.TrimRight(queryStr, ",")
 	queryStr += " WHERE user_id = ? AND id = ?"

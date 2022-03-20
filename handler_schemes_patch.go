@@ -51,8 +51,8 @@ func schemePatch(c echo.Context) error {
 	}
 
 	// Check project id
-	if post.ProjectId != nil {
-		valid, err := checkProjectId(u.Raw, *post.ProjectId)
+	if post.ProjectId.UInt64 != nil && *post.ProjectId.UInt64 != nil {
+		valid, err := checkProjectId(u.Raw, **post.ProjectId.UInt64)
 		if err != nil {
 			// 500: Internal server error
 			c.Logger().Debug(err)
@@ -60,8 +60,8 @@ func schemePatch(c echo.Context) error {
 		}
 		if !valid {
 			// 409: Conflit
-			c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", *post.ProjectId))
-			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", *post.ProjectId)}, "	")
+			c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", **post.ProjectId.UInt64))
+			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", **post.ProjectId.UInt64)}, "	")
 		}
 	}
 
