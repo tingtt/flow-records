@@ -111,6 +111,7 @@ func main() {
 	e.GET("/:id", get)
 	e.PATCH("/:id", patch)
 	e.DELETE("/:id", delete)
+	e.DELETE("/", deleteAll)
 	e.POST("/changelogs", changeLogPost)
 	e.GET("/changelogs", changeLogGetList)
 	e.GET("/changelogs/:id", changeLogGet)
