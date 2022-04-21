@@ -117,6 +117,7 @@ func main() {
 	e.GET("/changelogs/:id", changeLogGet)
 	e.PATCH("/changelogs/:id", changeLogPatch)
 	e.DELETE("/changelogs/:id", changeLogDelete)
+	e.DELETE("/changelogs", changeLogDeleteAll)
 	e.POST("/schemes", schemePost)
 	e.GET("/schemes", schemeGetList)
 	e.GET("/schemes/:id", schemeGet)
