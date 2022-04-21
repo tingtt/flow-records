@@ -121,6 +121,7 @@ func main() {
 	e.GET("/schemes/:id", schemeGet)
 	e.PATCH("/schemes/:id", schemePatch)
 	e.DELETE("/schemes/:id", schemeDelete)
+	e.DELETE("/schemes", schemeDeleteAll)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%d", *port)))
 }

@@ -274,6 +274,13 @@ paths:
         500:
           description: Internal server error
 
+    delete:
+      responses:
+        204:
+          description: Deleted
+        500:
+          description: Internal server error
+
   /schemes/{id}:
     get:
       parameters:
