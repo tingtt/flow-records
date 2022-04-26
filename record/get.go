@@ -21,6 +21,7 @@ func Get(userId uint64, id uint64) (r Record, notFound bool, err error) {
 	if err != nil {
 		return
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
 		// Not found

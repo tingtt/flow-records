@@ -33,6 +33,7 @@ func Get(userId uint64, id uint64, q GetQuery) (s Scheme, notFound bool, err err
 	if err != nil {
 		return
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
 		// Not found

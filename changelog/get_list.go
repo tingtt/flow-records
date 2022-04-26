@@ -56,6 +56,7 @@ func GetList(userId uint64, q GetListQuery) (changeLogs []ChangeLog, err error) 
 	if err != nil {
 		return
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		c := ChangeLog{}

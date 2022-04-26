@@ -39,6 +39,7 @@ func GetList(userId uint64, q GetListQuery) (schemes []Scheme, err error) {
 	} else {
 		rows, err = stmtOut.Query(userId, *q.ProjectId)
 	}
+	defer rows.Close()
 	if err != nil {
 		return
 	}
