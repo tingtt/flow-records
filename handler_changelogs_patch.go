@@ -61,9 +61,9 @@ func changeLogPatch(c echo.Context) error {
 			return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 		}
 		if notFound {
-			// 409: Conflict
-			c.Logger().Debug(fmt.Sprintf("scheme id: %d does not exists", post.SchemeId))
-			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("scheme id: %d does not exists", post.SchemeId)}, "	")
+			// 400: Bad request
+			c.Logger().Debugf("scheme id: %d does not exists", post.SchemeId)
+			return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("scheme id: %d does not exists", post.SchemeId)}, "	")
 		}
 	}
 
@@ -71,7 +71,7 @@ func changeLogPatch(c echo.Context) error {
 	cl, notFound, err := changelog.Patch(userId, id, *post)
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 	if notFound {

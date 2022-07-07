@@ -61,15 +61,15 @@ func schemePatch(c echo.Context) error {
 		}
 		if !valid {
 			// 409: Conflit
-			c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", **post.ProjectId.UInt64))
-			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", **post.ProjectId.UInt64)}, "	")
+			c.Logger().Debugf("project id: %d does not exist", **post.ProjectId.UInt64)
+			return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", **post.ProjectId.UInt64)}, "	")
 		}
 	}
 
 	s, notFound, err := scheme.Patch(userId, id, *post)
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 	if notFound {

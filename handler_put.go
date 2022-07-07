@@ -67,19 +67,19 @@ func putList(c echo.Context) error {
 	valid, err := checkTodoId(u.Raw, todoId)
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 	if !valid {
 		// 409: Conflit
-		c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", todoId))
-		return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", todoId)}, "	")
+		c.Logger().Debugf("project id: %d does not exist", todoId)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", todoId)}, "	")
 	}
 
 	records, err := record.Put(userId, query.TodoId, *put)
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 

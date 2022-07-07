@@ -31,7 +31,7 @@ func schemeDelete(c echo.Context) error {
 	notFound, err := scheme.Delete(userId, id)
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 	if notFound {

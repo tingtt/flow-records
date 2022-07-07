@@ -51,8 +51,8 @@ func schemePost(c echo.Context) error {
 		}
 		if !valid {
 			// 409: Conflit
-			c.Logger().Debug(fmt.Sprintf("project id: %d does not exist", *post.ProjectId))
-			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", *post.ProjectId)}, "	")
+			c.Logger().Debugf("project id: %d does not exist", *post.ProjectId)
+			return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", *post.ProjectId)}, "	")
 		}
 	}
 
@@ -60,7 +60,7 @@ func schemePost(c echo.Context) error {
 	s, err := scheme.Post(userId, *post)
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 

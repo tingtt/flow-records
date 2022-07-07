@@ -52,8 +52,8 @@ func changeLogPost(c echo.Context) error {
 		}
 		if !valid {
 			// 409: Conflit
-			c.Logger().Debug(fmt.Sprintf("todo id: %d does not exist", *post.TodoId))
-			return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("todo id: %d does not exist", *post.TodoId)}, "	")
+			c.Logger().Debugf("todo id: %d does not exist", *post.TodoId)
+			return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("todo id: %d does not exist", *post.TodoId)}, "	")
 		}
 	}
 
@@ -61,20 +61,20 @@ func changeLogPost(c echo.Context) error {
 	_, notFound, err := scheme.Get(userId, post.SchemeId, scheme.GetQuery{})
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 	if notFound {
-		// 409: Conflict
-		c.Logger().Debug(fmt.Sprintf("scheme id: %d does not exists", post.SchemeId))
-		return c.JSONPretty(http.StatusConflict, map[string]string{"message": fmt.Sprintf("scheme id: %d does not exists", post.SchemeId)}, "	")
+		// 400: Bad request
+		c.Logger().Debugf("scheme id: %d does not exists", post.SchemeId)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("scheme id: %d does not exists", post.SchemeId)}, "	")
 	}
 
 	// Write to db
 	cl, err := changelog.Post(userId, *post)
 	if err != nil {
 		// 500: Internal server error
-		c.Logger().Debug(err)
+		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
 
