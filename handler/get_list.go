@@ -1,8 +1,9 @@
-package main
+package handler
 
 import (
+	"flow-records/flags"
 	"flow-records/jwt"
-	"flow-records/scheme"
+	"flow-records/record"
 	"net/http"
 	"time"
 
@@ -10,24 +11,25 @@ import (
 	"github.com/labstack/echo"
 )
 
-type GetListQuery struct {
-	ProjectId *uint64 `query:"project_id" validate:"omitempty,gte=1"`
-	Start     *string `query:"start" validate:"omitempty,datetime"`
-	End       *string `query:"end" validate:"omitempty,datetime"`
-	Embed     *string `query:"embed" validate:"omitempty,oneof=records record.changelog"`
+type GetRecordListQuery struct {
+	TodoId   *uint64 `query:"todo_id" validate:"omitempty"`
+	SchemeId *uint64 `query:"scheme_id" validate:"omitempty"`
+	Start    *string `query:"start" validate:"omitempty,datetime"`
+	End      *string `query:"end" validate:"omitempty,datetime"`
+	Embed    *string `query:"embed" validate:"omitempty,oneof=changelog"`
 }
 
-func schemeGetList(c echo.Context) error {
+func GetList(c echo.Context) error {
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
 	}
 
 	// Bind request query
-	query := new(GetListQuery)
+	query := new(GetRecordListQuery)
 	if err = c.Bind(query); err != nil {
 		// 400: Bad request
 		c.Logger().Debug(err)
@@ -59,9 +61,9 @@ func schemeGetList(c echo.Context) error {
 		}
 		end = &endTmp
 	}
-	queryParsed := scheme.GetListQuery{ProjectId: query.ProjectId, Embed: query.Embed, Start: start, End: end}
+	queryParsed := record.GetListQuery{TodoId: query.TodoId, SchemeId: query.SchemeId, Start: start, End: end, Embed: query.Embed}
 
-	schemes, err := scheme.GetList(userId, queryParsed)
+	records, err := record.GetList(userId, queryParsed)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Error(err)
@@ -69,8 +71,8 @@ func schemeGetList(c echo.Context) error {
 	}
 
 	// 200: Success
-	if schemes == nil {
+	if records == nil {
 		return c.JSONPretty(http.StatusOK, []interface{}{}, "	")
 	}
-	return c.JSONPretty(http.StatusOK, schemes, "	")
+	return c.JSONPretty(http.StatusOK, records, "	")
 }

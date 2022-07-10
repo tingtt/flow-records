@@ -1,8 +1,9 @@
-package main
+package handler
 
 import (
-	"flow-records/changelog"
+	"flow-records/flags"
 	"flow-records/jwt"
+	"flow-records/record"
 	"net/http"
 	"strconv"
 
@@ -10,10 +11,10 @@ import (
 	"github.com/labstack/echo"
 )
 
-func changeLogGet(c echo.Context) error {
+func Delete(c echo.Context) error {
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
@@ -28,7 +29,7 @@ func changeLogGet(c echo.Context) error {
 		return echo.ErrNotFound
 	}
 
-	cl, notFound, err := changelog.Get(userId, id)
+	notFound, err := record.Delete(userId, id)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Error(err)
@@ -36,10 +37,10 @@ func changeLogGet(c echo.Context) error {
 	}
 	if notFound {
 		// 404: Not found
-		c.Logger().Debug("changelog not found")
-		return c.JSONPretty(http.StatusNotFound, map[string]string{"message": "changelog not found"}, "	")
+		c.Logger().Debug("record not found")
+		return c.JSONPretty(http.StatusNotFound, map[string]string{"message": "record not found"}, "	")
 	}
 
-	// 200: Success
-	return c.JSONPretty(http.StatusOK, cl, "	")
+	// 204: No content
+	return c.JSONPretty(http.StatusNoContent, map[string]string{"message": "Deleted"}, "	")
 }

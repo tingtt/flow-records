@@ -1,24 +1,25 @@
-package main
+package handler
 
 import (
+	"flow-records/flags"
 	"flow-records/jwt"
-	"flow-records/record"
+	"flow-records/scheme"
 	"net/http"
 
 	jwtGo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
-func deleteAll(c echo.Context) error {
+func SchemeDeleteAll(c echo.Context) error {
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
 	}
 
-	err = record.DeleteAll(userId)
+	err = scheme.DeleteAll(userId)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Error(err)

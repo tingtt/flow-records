@@ -1,7 +1,8 @@
-package main
+package handler
 
 import (
 	"flow-records/changelog"
+	"flow-records/flags"
 	"flow-records/jwt"
 	"net/http"
 	"time"
@@ -18,10 +19,10 @@ type GetChangeLogListQuery struct {
 	ProjectId *uint64 `query:"project_id" validate:"omitempty,gte=1"`
 }
 
-func changeLogGetList(c echo.Context) error {
+func ChangeLogGetList(c echo.Context) error {
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")

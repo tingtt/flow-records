@@ -1,7 +1,8 @@
-package main
+package handler
 
 import (
 	"flow-records/changelog"
+	"flow-records/flags"
 	"flow-records/jwt"
 	"net/http"
 	"strconv"
@@ -10,10 +11,10 @@ import (
 	"github.com/labstack/echo"
 )
 
-func changeLogDelete(c echo.Context) error {
+func ChangeLogDelete(c echo.Context) error {
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")

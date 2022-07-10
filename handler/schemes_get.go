@@ -1,34 +1,43 @@
-package main
+package handler
 
 import (
+	"flow-records/flags"
 	"flow-records/jwt"
-	"flow-records/record"
+	"flow-records/scheme"
 	"net/http"
+	"strconv"
 	"time"
 
 	jwtGo "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
-type GetRecordListQuery struct {
-	TodoId   *uint64 `query:"todo_id" validate:"omitempty"`
-	SchemeId *uint64 `query:"scheme_id" validate:"omitempty"`
-	Start    *string `query:"start" validate:"omitempty,datetime"`
-	End      *string `query:"end" validate:"omitempty,datetime"`
-	Embed    *string `query:"embed" validate:"omitempty,oneof=changelog"`
+type GetQuery struct {
+	Embed *string `query:"embed" validate:"omitempty,oneof=records record.changelog"`
+	Start *string `query:"start" validate:"omitempty,datetime"`
+	End   *string `query:"end" validate:"omitempty,datetime"`
 }
 
-func getList(c echo.Context) error {
+func SchemeGet(c echo.Context) error {
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
 	}
 
+	// id
+	idStr := c.Param("id")
+	// string -> uint64
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		// 404: Not found
+		return echo.ErrNotFound
+	}
+
 	// Bind request query
-	query := new(GetRecordListQuery)
+	query := new(GetQuery)
 	if err = c.Bind(query); err != nil {
 		// 400: Bad request
 		c.Logger().Debug(err)
@@ -60,18 +69,21 @@ func getList(c echo.Context) error {
 		}
 		end = &endTmp
 	}
-	queryParsed := record.GetListQuery{TodoId: query.TodoId, SchemeId: query.SchemeId, Start: start, End: end, Embed: query.Embed}
+	queryParsed := scheme.GetQuery{Embed: query.Embed, Start: start, End: end}
 
-	records, err := record.GetList(userId, queryParsed)
+	// Read db
+	s, notFound, err := scheme.Get(userId, id, queryParsed)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
+	if notFound {
+		// 404: Not found
+		c.Logger().Debug("scheme not found")
+		return c.JSONPretty(http.StatusNotFound, map[string]string{"message": "scheme not found"}, "	")
+	}
 
 	// 200: Success
-	if records == nil {
-		return c.JSONPretty(http.StatusOK, []interface{}{}, "	")
-	}
-	return c.JSONPretty(http.StatusOK, records, "	")
+	return c.JSONPretty(http.StatusOK, s, "	")
 }

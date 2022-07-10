@@ -1,8 +1,10 @@
-package main
+package handler
 
 import (
+	"flow-records/flags"
 	"flow-records/jwt"
 	"flow-records/record"
+	"flow-records/utils"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -16,7 +18,7 @@ type putQuery struct {
 	TodoId uint64 `query:"todo_id" validate:"required,gte=1"`
 }
 
-func putList(c echo.Context) error {
+func PutList(c echo.Context) error {
 	// Check `Content-Type`
 	if !strings.Contains(c.Request().Header.Get("Content-Type"), "application/json") {
 		// 415: Invalid `Content-Type`
@@ -25,7 +27,7 @@ func putList(c echo.Context) error {
 
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
@@ -64,16 +66,16 @@ func putList(c echo.Context) error {
 	}
 
 	// Check todo id
-	valid, err := checkTodoId(u.Raw, todoId)
+	status, err := utils.HttpGet(fmt.Sprintf("%s/%d", *flags.Get().ServiceUrlTodos, todoId), &u.Raw)
 	if err != nil {
 		// 500: Internal server error
 		c.Logger().Error(err)
 		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 	}
-	if !valid {
-		// 409: Conflit
-		c.Logger().Debugf("project id: %d does not exist", todoId)
-		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", todoId)}, "	")
+	if status != http.StatusOK {
+		// 400: Bad request
+		c.Logger().Debugf("todo id: %d does not exist", todoId)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("todo id: %d does not exist", todoId)}, "	")
 	}
 
 	records, err := record.Put(userId, query.TodoId, *put)

@@ -1,10 +1,12 @@
-package main
+package handler
 
 import (
 	"encoding/json"
+	"flow-records/flags"
 	"flow-records/jwt"
 	"flow-records/record"
 	"flow-records/scheme"
+	"flow-records/utils"
 	"fmt"
 	"net/http"
 	"strings"
@@ -13,7 +15,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func post(c echo.Context) error {
+func Post(c echo.Context) error {
 	// Check `Content-Type`
 	if !strings.Contains(c.Request().Header.Get("Content-Type"), "application/json") {
 		// 415: Invalid `Content-Type`
@@ -22,7 +24,7 @@ func post(c echo.Context) error {
 
 	// Check token
 	u := c.Get("user").(*jwtGo.Token)
-	userId, err := jwt.CheckToken(*jwtIssuer, u)
+	userId, err := jwt.CheckToken(*flags.Get().JwtIssuer, u)
 	if err != nil {
 		c.Logger().Debug(err)
 		return c.JSONPretty(http.StatusUnauthorized, map[string]string{"message": err.Error()}, "	")
@@ -59,16 +61,16 @@ func post(c echo.Context) error {
 
 		// Check todo id
 		if postMultiple.TodoId != nil {
-			valid, err := checkTodoId(u.Raw, *postMultiple.TodoId)
+			status, err := utils.HttpGet(fmt.Sprintf("%s/%d", *flags.Get().ServiceUrlTodos, *postMultiple.TodoId), &u.Raw)
 			if err != nil {
 				// 500: Internal server error
-				c.Logger().Debug(err)
+				c.Logger().Error(err)
 				return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
 			}
-			if !valid {
-				// 409: Conflit
-				c.Logger().Debugf("project id: %d does not exist", *postMultiple.TodoId)
-				return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("project id: %d does not exist", *postMultiple.TodoId)}, "	")
+			if status != http.StatusOK {
+				// 400: Bad request
+				c.Logger().Debugf("todo id: %d does not exist", *postMultiple.TodoId)
+				return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("todo id: %d does not exist", *postMultiple.TodoId)}, "	")
 			}
 		}
 
@@ -120,18 +122,16 @@ func post(c echo.Context) error {
 	}
 
 	// Check todo id
-	if post.TodoId != nil {
-		valid, err := checkTodoId(u.Raw, *post.TodoId)
-		if err != nil {
-			// 500: Internal server error
-			c.Logger().Debug(err)
-			return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
-		}
-		if !valid {
-			// 409: Conflit
-			c.Logger().Debugf("todo id: %d does not exist", *post.TodoId)
-			return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("todo id: %d does not exist", *post.TodoId)}, "	")
-		}
+	status, err := utils.HttpGet(fmt.Sprintf("%s/%d", *flags.Get().ServiceUrlTodos, post.TodoId), &u.Raw)
+	if err != nil {
+		// 500: Internal server error
+		c.Logger().Error(err)
+		return c.JSONPretty(http.StatusInternalServerError, map[string]string{"message": err.Error()}, "	")
+	}
+	if status != http.StatusOK {
+		// 400: Bad request
+		c.Logger().Debugf("todo id: %d does not exist", post.TodoId)
+		return c.JSONPretty(http.StatusBadRequest, map[string]string{"message": fmt.Sprintf("todo id: %d does not exist", post.TodoId)}, "	")
 	}
 
 	// Check schemeId
